@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mission: First Date — Classified</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --red:#ef233c;--blue:#00b4d8;--green:#06d6a0;--gold:#ffd60a;
+  --dark:#050a12;--darker:#030609;--card:#071520;
+}
+body{font-family:'Rajdhani',sans-serif;background:#0a0a0f;color:#e8f4fd;min-height:100vh;overflow-x:hidden;}
+
+/* SECTIONS */
+.section{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem 1.2rem;position:relative;}
+.section.active{display:flex;}
+.section>*{position:relative;z-index:2;}
+
+/* AMBIENT */
+.hud-particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+.particle{position:absolute;width:2px;height:2px;background:var(--blue);border-radius:50%;opacity:0;animation:floatup var(--dur,4s) linear var(--delay,0s) infinite;}
+@keyframes floatup{0%{opacity:0;transform:translateY(100vh) translateX(0)}10%{opacity:0.5}90%{opacity:0.2}100%{opacity:0;transform:translateY(-30px) translateX(var(--drift,10px))}}
+.scan-line{position:fixed;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--blue) 50%,transparent);opacity:0.1;animation:scan 7s linear infinite;z-index:1;}
+@keyframes scan{0%{top:0}100%{top:100vh}}
+.grid-overlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(0,180,216,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,180,216,0.03) 1px,transparent 1px);background-size:40px 40px;}
+
+/* ARC REACTOR */
+.arc-reactor{width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,#a8edff 0%,#00b4d8 35%,#0077b6 60%,#03045e 100%);box-shadow:0 0 30px var(--blue),0 0 60px #0077b6;margin-bottom:1.8rem;animation:pulse 2s ease-in-out infinite;position:relative;flex-shrink:0;}
+.arc-reactor.sm{width:75px;height:75px;margin-bottom:1rem;}
+.arc-reactor::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:radial-gradient(circle,#fff 0%,#a8edff 50%,#0096c7 100%);box-shadow:0 0 20px #fff;}
+.arc-reactor.sm::after{width:26px;height:26px;}
+@keyframes pulse{0%,100%{box-shadow:0 0 30px var(--blue),0 0 60px #0077b6}50%{box-shadow:0 0 55px var(--blue),0 0 110px #0077b6,0 0 8px #fff}}
+
+/* TYPOGRAPHY */
+.hero-title{font-family:'Orbitron',monospace;font-size:clamp(1.4rem,5vw,2.4rem);font-weight:900;color:#c9d6df;letter-spacing:4px;text-align:center;margin-bottom:0.4rem;}
+.hero-sub{font-size:clamp(0.85rem,2.5vw,1.05rem);color:#90e0ef;letter-spacing:3px;text-align:center;margin-bottom:0.5rem;}
+.jarvis-text{font-size:0.85rem;color:#48cae4;letter-spacing:1px;text-align:center;margin-bottom:1.8rem;opacity:0.9;max-width:400px;line-height:1.8;}
+.hud-line{width:220px;height:1px;background:linear-gradient(90deg,transparent,var(--blue),transparent);margin:0.8rem auto;}
+.section-title{font-family:'Orbitron',monospace;font-size:clamp(0.9rem,3vw,1.25rem);color:#c9d6df;text-align:center;margin-bottom:0.3rem;letter-spacing:2px;}
+.section-sub{font-size:0.8rem;color:#48cae4;letter-spacing:1px;text-align:center;margin-bottom:1.4rem;line-height:1.6;max-width:420px;}
+
+/* HUD CORNERS decoration */
+.hud-frame{position:relative;width:100%;max-width:520px;}
+.hud-frame::before,.hud-frame::after{content:'';position:absolute;width:16px;height:16px;border-color:var(--blue);opacity:0.5;}
+.hud-frame::before{top:-6px;left:-6px;border-top:2px solid;border-left:2px solid;}
+.hud-frame::after{bottom:-6px;right:-6px;border-bottom:2px solid;border-right:2px solid;}
+
+/* BUTTONS */
+.btn{font-family:'Orbitron',monospace;font-size:0.68rem;font-weight:700;letter-spacing:2px;padding:0.75rem 1.8rem;border:1.5px solid var(--blue);background:transparent;color:var(--blue);border-radius:3px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.btn:hover{background:var(--blue);color:#0a0a0f;box-shadow:0 0 24px var(--blue);}
+.btn:disabled{opacity:0.35;cursor:not-allowed;}
+.btn-green{border-color:var(--green);color:var(--green);}
+.btn-green:hover{background:var(--green);color:#0a0a0f;box-shadow:0 0 24px var(--green);}
+.btn-red{border-color:var(--red);color:var(--red);}
+.btn-red:hover{background:var(--red);color:#0a0a0f;box-shadow:0 0 24px var(--red);}
+
+/* NAV */
+.nav-row{display:flex;gap:8px;margin-top:2rem;justify-content:center;flex-wrap:wrap;}
+.nav-dot{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--blue);background:transparent;cursor:pointer;transition:background 0.2s;}
+.nav-dot.active{background:var(--blue);}
+.nav-label{font-family:'Orbitron',monospace;font-size:0.45rem;color:#48cae4;letter-spacing:1px;text-align:center;margin-top:2px;}
+
+/* STAT BAR — techy decorations */
+.stat-row{display:flex;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap;justify-content:center;}
+.stat-box{text-align:center;}
+.stat-val{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--blue);}
+.stat-lbl{font-size:0.6rem;color:#48cae4;letter-spacing:2px;opacity:0.7;}
+
+/* ═══ HERO ═══ */
+#s-hero{background:radial-gradient(ellipse at 50% 40%,#0d2137 0%,#0a0a0f 65%);}
+.typing-line{font-family:'Orbitron',monospace;font-size:0.7rem;color:#48cae4;letter-spacing:2px;border-right:2px solid var(--blue);white-space:nowrap;overflow:hidden;width:0;animation:type 2.5s steps(40,end) 0.5s forwards,blink 0.8s step-end infinite;}
+@keyframes type{to{width:100%}}
+@keyframes blink{0%,100%{border-color:var(--blue)}50%{border-color:transparent}}
+.hex-ring{position:absolute;border:1px solid rgba(0,180,216,0.15);border-radius:50%;animation:spinRing var(--spd,12s) linear infinite;}
+
+/* ═══ GAME ═══ */
+#s-game{background:var(--dark);}
+#dodge-arena{width:100%;max-width:480px;height:250px;border:1px solid var(--blue);border-radius:6px;position:relative;background:#040d18;overflow:hidden;margin-bottom:1rem;}
+.corner{position:absolute;width:14px;height:14px;border-color:var(--blue);}
+.c-tl{top:5px;left:5px;border-top:2px solid;border-left:2px solid;}
+.c-tr{top:5px;right:5px;border-top:2px solid;border-right:2px solid;}
+.c-bl{bottom:5px;left:5px;border-bottom:2px solid;border-left:2px solid;}
+.c-br{bottom:5px;right:5px;border-bottom:2px solid;border-right:2px solid;}
+.arena-label{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-family:'Orbitron',monospace;font-size:0.5rem;color:rgba(0,180,216,0.4);letter-spacing:3px;}
+#dodge-btn{position:absolute;font-family:'Orbitron',monospace;font-size:0.58rem;font-weight:700;letter-spacing:1.5px;padding:0.55rem 1rem;border:1.5px solid var(--red);background:#10050a;color:var(--red);border-radius:3px;cursor:pointer;white-space:nowrap;top:50%;left:50%;transform:translate(-50%,-50%);transition:top 0.12s ease,left 0.12s ease;}
+#dodge-btn.caught{border-color:var(--green);color:var(--green);background:#001a12;animation:btnWin 0.5s ease;}
+@keyframes btnWin{0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.3)}100%{transform:translate(-50%,-50%) scale(1)}}
+#attempt-txt{font-size:0.78rem;color:#48cae4;letter-spacing:1px;min-height:1.4rem;text-align:center;max-width:400px;line-height:1.6;}
+.progress-bar{width:100%;max-width:480px;height:3px;background:#0d1f2d;border-radius:2px;margin-bottom:0.5rem;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:2px;width:0%;transition:width 0.4s ease;}
+
+/* ═══ ITINERARY ═══ */
+#s-itin{background:var(--dark);justify-content:flex-start;padding-top:2.5rem;padding-bottom:3rem;}
+#path-wrap{width:100%;max-width:520px;overflow-x:auto;margin-bottom:1.2rem;}
+#path-svg{min-width:400px;width:100%;}
+
+.stop-block{width:100%;max-width:520px;margin-bottom:1.6rem;opacity:0;transform:translateY(16px);transition:all 0.5s ease;}
+.stop-block.visible{opacity:1;transform:translateY(0);}
+.stop-header{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(0,180,216,0.15);}
+.stop-num{font-family:'Orbitron',monospace;font-size:0.55rem;width:22px;height:22px;border:1px solid var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--blue);flex-shrink:0;}
+.stop-time-lbl{font-family:'Orbitron',monospace;font-size:0.6rem;color:var(--blue);letter-spacing:1.5px;flex-shrink:0;}
+.stop-title-txt{font-size:1rem;font-weight:600;color:#c9d6df;letter-spacing:0.5px;}
+.stop-icon{font-size:1.1rem;margin-left:auto;}
+.choice-hint{font-size:0.72rem;color:#48cae4;letter-spacing:0.5px;margin-bottom:0.5rem;opacity:0.8;}
+
+/* VENUE CARDS */
+.venue-grid{display:grid;grid-template-columns:1fr;gap:0.55rem;}
+@media(min-width:500px){.venue-grid.multi{grid-template-columns:1fr 1fr;}}
+.venue-card{border:1px solid rgba(0,180,216,0.2);border-radius:5px;padding:0.8rem 0.9rem;background:var(--card);cursor:pointer;transition:all 0.22s;position:relative;text-align:left;user-select:none;}
+.venue-card:hover{border-color:var(--blue);background:#0a1f30;}
+.venue-card.approved{border-color:var(--green);background:#031a10;}
+.venue-card.cleared{border-color:rgba(0,180,216,0.2);background:var(--card);opacity:1;}
+.approved-badge{display:none;font-family:'Orbitron',monospace;font-size:0.48rem;letter-spacing:1.5px;padding:0.18rem 0.45rem;border:1px solid var(--green);color:var(--green);border-radius:2px;background:#001a0d;margin-bottom:0.3rem;}
+.venue-card.approved .approved-badge{display:inline-block;}
+.click-hint{font-size:0.65rem;color:rgba(0,180,216,0.5);position:absolute;bottom:0.45rem;right:0.7rem;font-style:italic;}
+.venue-card.approved .click-hint{color:rgba(6,214,160,0.5);}
+.venue-name{font-size:0.95rem;font-weight:600;color:#e8f4fd;margin-bottom:0.2rem;}
+.venue-desc{font-size:0.75rem;color:#7fb8cc;line-height:1.55;}
+.venue-link{font-size:0.67rem;color:var(--blue);text-decoration:none;display:inline-block;margin-top:0.35rem;letter-spacing:0.5px;}
+.venue-link:hover{text-decoration:underline;}
+
+/* ═══ TEASE ═══ */
+#s-tease{background:radial-gradient(ellipse at 50% 50%,#12011a 0%,#0a0a0f 65%);}
+.tease-line{font-family:'Orbitron',monospace;font-size:clamp(0.8rem,2.5vw,1rem);color:#b48fff;letter-spacing:3px;text-align:center;line-height:2.4;opacity:0;animation:fadeIn 0.8s ease forwards;}
+@keyframes fadeIn{to{opacity:1}}
+.tease-emoji{font-size:2.5rem;margin-bottom:1rem;display:block;animation:bounce 1.5s ease-in-out infinite;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.countdown-box{font-family:'Orbitron',monospace;font-size:0.7rem;color:#b48fff;letter-spacing:2px;border:1px solid #b48fff33;border-radius:4px;padding:0.6rem 1.2rem;margin-top:0.5rem;text-align:center;}
+
+/* ═══ RSVP ═══ */
+#s-rsvp{background:radial-gradient(ellipse at 50% 40%,#0d2137 0%,#0a0a0f 65%);}
+.rsvp-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:0.8rem;}
+#rsvp-msg{margin-top:1.2rem;font-size:0.85rem;color:#90e0ef;text-align:center;min-height:2rem;letter-spacing:1px;max-width:380px;line-height:1.7;}
+
+/* ═══ SUMMARY ═══ */
+#s-summary{background:radial-gradient(ellipse at 50% 40%,#001a0f 0%,#0a0a0f 65%);justify-content:flex-start;padding-top:2.5rem;padding-bottom:3rem;}
+.summary-row{width:100%;max-width:500px;display:flex;align-items:flex-start;gap:0.8rem;padding:0.65rem 0;border-bottom:1px solid #0d2a38;}
+.summary-time{font-family:'Orbitron',monospace;font-size:0.56rem;color:var(--blue);letter-spacing:1.5px;white-space:nowrap;padding-top:3px;min-width:70px;}
+.summary-detail{flex:1;}
+.summary-stop{font-size:0.9rem;color:#c9d6df;font-weight:600;}
+.summary-venue{font-size:0.78rem;color:var(--green);margin-top:2px;}
+.s-badge{font-family:'Orbitron',monospace;font-size:0.48rem;padding:0.18rem 0.4rem;border-radius:2px;white-space:nowrap;margin-left:auto;flex-shrink:0;}
+.s-approved{border:1px solid var(--green);color:var(--green);background:#001a0d;}
+.s-skipped{border:1px solid rgba(239,35,60,0.3);color:rgba(239,35,60,0.6);background:transparent;}
+#send-status{margin-top:0.8rem;font-size:0.8rem;color:#48cae4;text-align:center;min-height:1.2rem;letter-spacing:1px;max-width:380px;line-height:1.6;}
+
+/* LOADING OVERLAY */
+#loading{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0a0f;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s;}
+.load-bar{width:200px;height:2px;background:#0d1f2d;border-radius:2px;margin-top:1rem;}
+.load-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:2px;width:0%;animation:loadup 1.8s ease forwards;}
+@keyframes loadup{to{width:100%}}
+.load-text{font-family:'Orbitron',monospace;font-size:0.65rem;color:var(--blue);letter-spacing:3px;margin-top:0.8rem;animation:blink2 1s step-end infinite;}
+@keyframes blink2{0%,100%{opacity:1}50%{opacity:0.3}}
+
+@media(max-width:480px){
+  .arc-reactor{width:100px;height:100px;}
+  .arc-reactor::after{width:36px;height:36px;}
+  #dodge-arena{height:210px;}
+  .hero-title{letter-spacing:2px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading">
+  <div class="arc-reactor sm"></div>
+  <div style="font-family:'Orbitron',monospace;font-size:0.7rem;color:#48cae4;letter-spacing:3px;margin-top:0.5rem;">INITIALISING JARVIS</div>
+  <div class="load-bar"><div class="load-fill"></div></div>
+  <div class="load-text">LOADING MISSION DATA...</div>
+</div>
+
+<div class="hud-particles" id="particles"></div>
+<div class="scan-line"></div>
+<div class="grid-overlay"></div>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<div class="section active" id="s-hero">
+  <!-- decorative rings -->
+  <div class="hex-ring" style="width:300px;height:300px;top:50%;left:50%;margin:-150px 0 0 -150px;--spd:20s;opacity:0.06;"></div>
+  <div class="hex-ring" style="width:450px;height:450px;top:50%;left:50%;margin:-225px 0 0 -225px;--spd:35s;animation-direction:reverse;opacity:0.04;"></div>
+
+  <div class="arc-reactor"></div>
+  <div class="hero-title">Mission: First Date</div>
+  <div class="hero-sub">Rosebank Operations — Classified</div>
+  <div class="hud-line"></div>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="stat-val">05</div><div class="stat-lbl">Stops</div></div>
+    <div class="stat-box"><div class="stat-val">8h</div><div class="stat-lbl">Duration</div></div>
+    <div class="stat-box"><div class="stat-val">01</div><div class="stat-lbl">Mission</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--green);">∞</div><div class="stat-lbl">Good Time</div></div>
+  </div>
+
+  <div class="typing-line" id="typing-line">JARVIS: INCOMING PRIORITY-ONE TRANSMISSION...</div>
+  <div class="jarvis-text" style="margin-top:1rem;">"Good afternoon, Agent. A special operative has requested your company for a classified mission across Rosebank. Your clearance is required before accessing the full itinerary. Please proceed."</div>
+  <button class="btn" onclick="goTo('s-game')">Request Clearance ›</button>
+
+  <div class="nav-row" id="nav-hero">
+    <div><div class="nav-dot active" onclick="goTo('s-hero')"></div><div class="nav-label">HOME</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-game')"></div><div class="nav-label">AUTH</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-itin')"></div><div class="nav-label">BRIEF</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-tease')"></div><div class="nav-label">TEASE</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-rsvp')"></div><div class="nav-label">RSVP</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-summary')"></div><div class="nav-label">REPORT</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ GAME ═══════════════ -->
+<div class="section" id="s-game">
+  <div class="section-title">Identity Verification</div>
+  <div class="section-sub">JARVIS needs to confirm you're not a Hydra agent.<br>Catch the button. It has commitment issues.</div>
+
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+  <div id="dodge-arena">
+    <div class="corner c-tl"></div><div class="corner c-tr"></div>
+    <div class="corner c-bl"></div><div class="corner c-br"></div>
+    <div class="arena-label">BIOMETRIC SCAN IN PROGRESS</div>
+    <button id="dodge-btn" onclick="caughtIt()">UNLOCK ITINERARY</button>
+  </div>
+  <div id="attempt-txt"></div>
+  <button class="btn" style="margin-top:1rem;font-size:0.58rem;" onclick="goTo('s-itin')">Skip verification (cheat code 😏)</button>
+
+  <div class="nav-row">
+    <div><div class="nav-dot" onclick="goTo('s-hero')"></div><div class="nav-label">HOME</div></div>
+    <div><div class="nav-dot active" onclick="goTo('s-game')"></div><div class="nav-label">AUTH</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-itin')"></div><div class="nav-label">BRIEF</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-tease')"></div><div class="nav-label">TEASE</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-rsvp')"></div><div class="nav-label">RSVP</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-summary')"></div><div class="nav-label">REPORT</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ ITINERARY ═══════════════ -->
+<div class="section" id="s-itin">
+  <div class="section-title">Mission Blueprint — Rosebank</div>
+  <div class="section-sub">Tap a venue to approve it ✓ — tap again to clear it.<br>For stops with two options, selecting one auto-clears the other.</div>
+
+  <div id="path-wrap">
+    <svg id="path-svg" viewBox="0 0 520 60" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#00b4d8"/>
+        </marker>
+      </defs>
+      <line x1="28" y1="28" x2="488" y2="28" stroke="#00b4d8" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arr)" opacity="0.35"/>
+      <circle cx="28"  cy="28" r="9" fill="#00b4d8" opacity="0.9"/><text x="28"  y="48" text-anchor="middle" font-size="7.5" fill="#7fb8cc" font-family="Rajdhani">1PM</text>
+      <circle cx="148" cy="28" r="9" fill="#0077b6" opacity="0.9"/><text x="148" y="48" text-anchor="middle" font-size="7.5" fill="#7fb8cc" font-family="Rajdhani">3PM</text>
+      <circle cx="268" cy="28" r="9" fill="#8338ec" opacity="0.9"/><text x="268" y="48" text-anchor="middle" font-size="7.5" fill="#7fb8cc" font-family="Rajdhani">5PM</text>
+      <circle cx="388" cy="28" r="9" fill="#ef233c" opacity="0.9"/><text x="388" y="48" text-anchor="middle" font-size="7.5" fill="#7fb8cc" font-family="Rajdhani">7:30PM</text>
+      <circle cx="468" cy="28" r="9" fill="#ffd60a" opacity="0.9"/><text x="468" y="48" text-anchor="middle" font-size="7.5" fill="#7fb8cc" font-family="Rajdhani">8:30PM</text>
+      <circle cx="508" cy="28" r="9" fill="#06d6a0" opacity="0.9"/><text x="508" y="48" text-anchor="middle" font-size="7.5" fill="#7fb8cc" font-family="Rajdhani">9PM</text>
+      <text id="car-txt" x="28" y="22" text-anchor="middle" font-size="13">🚗</text>
+    </svg>
+  </div>
+
+  <!-- STOP 1 -->
+  <div class="stop-block" id="sb1">
+    <div class="stop-header">
+      <div class="stop-num">1</div>
+      <span class="stop-time-lbl">1:00 PM</span>
+      <span class="stop-title-txt">Keyes Art Mile</span>
+      <span class="stop-icon">🎨</span>
+    </div>
+    <p class="choice-hint">Single venue — tap to approve, tap again to clear</p>
+    <div class="venue-grid">
+      <div class="venue-card" id="v1a" onclick="toggleVenue('v1a','g1')">
+        <div class="approved-badge">✓ APPROVED</div>
+        <div class="venue-name">Keyes Art Mile, Rosebank</div>
+        <div class="venue-desc">Johannesburg's most creative kilometre — where you'll look effortlessly cultured simply by existing near the murals. Perfect opener. JARVIS calls it "architecturally photogenic with strong first-impression potential."</div>
+        <a class="venue-link" href="https://maps.google.com/?q=Keyes+Art+Mile+Rosebank+Johannesburg" target="_blank" onclick="event.stopPropagation()">↗ Open in Google Maps</a>
+        <div class="click-hint">tap to approve</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STOP 2 -->
+  <div class="stop-block" id="sb2">
+    <div class="stop-header">
+      <div class="stop-num">2</div>
+      <span class="stop-time-lbl">3:00 PM</span>
+      <span class="stop-title-txt">Museum of Illusions</span>
+      <span class="stop-icon">🪄</span>
+    </div>
+    <p class="choice-hint">Single venue — tap to approve, tap again to clear</p>
+    <div class="venue-grid">
+      <div class="venue-card" id="v2a" onclick="toggleVenue('v2a','g2')">
+        <div class="approved-badge">✓ APPROVED</div>
+        <div class="venue-name">Museum of Illusions, Rosebank</div>
+        <div class="venue-desc">A place designed to make two people question everything — physics, space, and whether the floor is actually the ceiling. Warning: may cause uncontrollable laughter and suspicious amounts of fun. JARVIS-approved for maximum conversation generation.</div>
+        <a class="venue-link" href="https://maps.google.com/?q=Museum+of+Illusions+Rosebank+Johannesburg" target="_blank" onclick="event.stopPropagation()">↗ Open in Google Maps</a>
+        <div class="click-hint">tap to approve</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STOP 3 -->
+  <div class="stop-block" id="sb3">
+    <div class="stop-header">
+      <div class="stop-num">3</div>
+      <span class="stop-time-lbl">5:00 PM</span>
+      <span class="stop-title-txt">Dinner — Choose one</span>
+      <span class="stop-icon">🍜</span>
+    </div>
+    <p class="choice-hint">Two options — selecting one auto-clears the other</p>
+    <div class="venue-grid multi">
+      <div class="venue-card" id="v3a" onclick="selectOne('v3a','g3')">
+        <div class="approved-badge">✓ APPROVED</div>
+        <div class="venue-name">Chunky Chau, Rosebank</div>
+        <div class="venue-desc">Chinese cuisine so dangerously good it will make you forget mid-sentence what you were saying. The dumplings alone deserve their own classified file. Eyes-forward dining strongly recommended.</div>
+        <a class="venue-link" href="https://maps.google.com/?q=Chunky+Chau+Rosebank+Johannesburg" target="_blank" onclick="event.stopPropagation()">↗ Open in Google Maps</a>
+        <div class="click-hint">tap to approve</div>
+      </div>
+      <div class="venue-card" id="v3b" onclick="selectOne('v3b','g3')">
+        <div class="approved-badge">✓ APPROVED</div>
+        <div class="venue-name">Doppio Zero, Rosebank</div>
+        <div class="venue-desc">Italian-inspired comfort in an atmosphere that quietly announces very good taste without having to say a word. The kind of place where pasta arrives and conversation just flows naturally — possibly because nobody can stop eating.</div>
+        <a class="venue-link" href="https://maps.google.com/?q=Doppio+Zero+Rosebank+Johannesburg" target="_blank" onclick="event.stopPropagation()">↗ Open in Google Maps</a>
+        <div class="click-hint">tap to approve</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STOP 4 -->
+  <div class="stop-block" id="sb4">
+    <div class="stop-header">
+      <div class="stop-num">4</div>
+      <span class="stop-time-lbl">7:30 PM</span>
+      <span class="stop-title-txt">Bowling — Choose your lane</span>
+      <span class="stop-icon">🎳</span>
+    </div>
+    <p class="choice-hint">Two options — selecting one auto-clears the other</p>
+    <div class="venue-grid multi">
+      <div class="venue-card" id="v4a" onclick="selectOne('v4a','g4')">
+        <div class="approved-badge">✓ APPROVED</div>
+        <div class="venue-name">Magic Company, Rosebank Mall</div>
+        <div class="venue-desc">The classic Rosebank bowling experience. JARVIS has run the numbers: your bowling score matters far less than the fact that you're there. Expect friendly competition, suspicious gutter balls, and at least one victory dance.</div>
+        <a class="venue-link" href="https://maps.google.com/?q=Magic+Company+Rosebank+Mall+Johannesburg" target="_blank" onclick="event.stopPropagation()">↗ Open in Google Maps</a>
+        <div class="click-hint">tap to approve</div>
+      </div>
+      <div class="venue-card" id="v4b" onclick="selectOne('v4b','g4')">
+        <div class="approved-badge">✓ APPROVED</div>
+        <div class="venue-name">Cracker Zacs, Rosebank Mall</div>
+        <div class="venue-desc">Bowling with extra personality. The kind of place where even a gutter ball feels cinematic. Bonus: you can transition straight to drinks afterward without moving more than 12 steps. Strategic genius, JARVIS notes.</div>
+        <a class="venue-link" href="https://maps.google.com/?q=Cracker+Zacs+Rosebank+Mall+Johannesburg" target="_blank" onclick="event.stopPropagation()">↗ Open in Google Maps</a>
+        <div class="click-hint">tap to approve</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STOP 5 -->
+  <div class="stop-block" id="sb5">
+    <div class="stop-header">
+      <div class="stop-num">5</div>
+      <span class="stop-time-lbl">8:30 PM</span>
+      <span class="stop-title-txt">Drinks, Snacks & Games @ Cracker Zacs</span>
+      <span class="stop-icon">🥂</span>
+    </div>
+    <p class="choice-hint">Single venue — tap to approve, tap again to clear</p>
+    <div class="venue-grid">
+      <div class="venue-card" id="v5a" onclick="toggleVenue('v5a','g5')">
+        <div class="approved-badge">✓ APPROVED</div>
+        <div class="venue-name">Cracker Zacs — Drinks & Flirting Permitted</div>
+        <div class="venue-desc">The ideal final act: good drinks, light bites, bar games, and officially sanctioned flirting. JARVIS has pre-loaded 14 conversation topics as backup, though experience suggests they won't be needed. This is where the night gets properly good.</div>
+        <a class="venue-link" href="https://maps.google.com/?q=Cracker+Zacs+Rosebank+Mall+Johannesburg" target="_blank" onclick="event.stopPropagation()">↗ Open in Google Maps</a>
+        <div class="click-hint">tap to approve</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STOP 6 -->
+  <div class="stop-block" id="sb6">
+    <div class="stop-header">
+      <div class="stop-num">6</div>
+      <span class="stop-time-lbl">9:00 PM</span>
+      <span class="stop-title-txt">End of Mission</span>
+      <span class="stop-icon">🌙</span>
+    </div>
+    <p class="choice-hint">The final debrief — tap to acknowledge</p>
+    <div class="venue-grid">
+      <div class="venue-card" id="v6a" onclick="toggleVenue('v6a','g6')">
+        <div class="approved-badge">✓ ACKNOWLEDGED</div>
+        <div class="venue-name">Mission Complete</div>
+        <div class="venue-desc">End of a very good evening. JARVIS computes a 99.9% probability that this will not be the last mission. The remaining 0.1% is error margin — which, between us, JARVIS just chose to ignore entirely.</div>
+        <div class="click-hint">tap to acknowledge</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-green" style="margin-top:0.5rem;" onclick="goTo('s-tease')">Proceed to Final Briefing ›</button>
+
+  <div class="nav-row">
+    <div><div class="nav-dot" onclick="goTo('s-hero')"></div><div class="nav-label">HOME</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-game')"></div><div class="nav-label">AUTH</div></div>
+    <div><div class="nav-dot active" onclick="goTo('s-itin')"></div><div class="nav-label">BRIEF</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-tease')"></div><div class="nav-label">TEASE</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-rsvp')"></div><div class="nav-label">RSVP</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-summary')"></div><div class="nav-label">REPORT</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ TEASE ═══════════════ -->
+<div class="section" id="s-tease">
+  <span class="tease-emoji" id="tease-emoji">🤫</span>
+  <div class="section-title" style="color:#b48fff;margin-bottom:1rem;">One More Thing...</div>
+  <div class="hud-line" style="background:linear-gradient(90deg,transparent,#b48fff,transparent);"></div>
+
+  <div id="tease-lines" style="margin:1.5rem 0;text-align:center;"></div>
+
+  <div class="countdown-box" id="tease-counter">
+    <div style="font-size:0.6rem;letter-spacing:2px;margin-bottom:0.3rem;opacity:0.6;">JARVIS CALCULATING EXCITEMENT LEVELS</div>
+    <div id="exc-bar" style="height:6px;background:#1a0a2e;border-radius:3px;overflow:hidden;margin:0.3rem 0;">
+      <div id="exc-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#8338ec,#b48fff);border-radius:3px;transition:width 0.05s;"></div>
+    </div>
+    <div id="exc-val" style="font-size:0.9rem;color:#b48fff;">0%</div>
+  </div>
+
+  <div style="margin-top:1.5rem;font-family:'Orbitron',monospace;font-size:0.68rem;color:#b48fff;letter-spacing:2px;text-align:center;line-height:2;" id="tease-reveal" style="display:none;"></div>
+
+  <button class="btn" style="border-color:#b48fff;color:#b48fff;margin-top:1.5rem;" onclick="goTo('s-rsvp')">I'm Ready to Confirm ›</button>
+
+  <div class="nav-row">
+    <div><div class="nav-dot" onclick="goTo('s-hero')"></div><div class="nav-label">HOME</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-game')"></div><div class="nav-label">AUTH</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-itin')"></div><div class="nav-label">BRIEF</div></div>
+    <div><div class="nav-dot active" onclick="goTo('s-tease')"></div><div class="nav-label">TEASE</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-rsvp')"></div><div class="nav-label">RSVP</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-summary')"></div><div class="nav-label">REPORT</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ RSVP ═══════════════ -->
+<div class="section" id="s-rsvp">
+  <div class="arc-reactor sm"></div>
+  <div class="section-title">Mission Authorization Required</div>
+  <div class="section-sub">JARVIS is standing by. One question. Two options.<br>Choose wisely. (One of these is very obviously correct.)</div>
+  <div class="hud-line"></div>
+  <div class="rsvp-btns">
+    <button class="btn btn-green" onclick="rsvp(true)">✓ Accept Mission</button>
+    <button class="btn btn-red" onclick="rsvp(false)">Decline (bold error)</button>
+  </div>
+  <div id="rsvp-msg"></div>
+
+  <div class="nav-row">
+    <div><div class="nav-dot" onclick="goTo('s-hero')"></div><div class="nav-label">HOME</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-game')"></div><div class="nav-label">AUTH</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-itin')"></div><div class="nav-label">BRIEF</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-tease')"></div><div class="nav-label">TEASE</div></div>
+    <div><div class="nav-dot active" onclick="goTo('s-rsvp')"></div><div class="nav-label">RSVP</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-summary')"></div><div class="nav-label">REPORT</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ SUMMARY ═══════════════ -->
+<div class="section" id="s-summary">
+  <div class="arc-reactor sm"></div>
+  <div class="section-title">Mission Debrief — Choices Logged</div>
+  <div class="section-sub">Your selections have been recorded by JARVIS.<br>Hit transmit to send your report to Command HQ.</div>
+  <div class="hud-line"></div>
+  <div id="summary-list" style="width:100%;max-width:500px;margin-bottom:1rem;"></div>
+  <button class="btn btn-green" id="send-btn" onclick="sendReport()">📡 Transmit Report to Command</button>
+  <div id="send-status"></div>
+
+  <div class="nav-row">
+    <div><div class="nav-dot" onclick="goTo('s-hero')"></div><div class="nav-label">HOME</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-game')"></div><div class="nav-label">AUTH</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-itin')"></div><div class="nav-label">BRIEF</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-tease')"></div><div class="nav-label">TEASE</div></div>
+    <div><div class="nav-dot" onclick="goTo('s-rsvp')"></div><div class="nav-label">RSVP</div></div>
+    <div><div class="nav-dot active" onclick="goTo('s-summary')"></div><div class="nav-label">REPORT</div></div>
+  </div>
+</div>
+
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+(function(){
+  // ── EmailJS init ──────────────────────────────────────────────────
+  emailjs.init('YOUR_PUBLIC_KEY'); // ← paste your EmailJS public key here
+
+  const SECTIONS=['s-hero','s-game','s-itin','s-tease','s-rsvp','s-summary'];
+
+  // ── Loading screen ────────────────────────────────────────────────
+  window.addEventListener('load',function(){
+    setTimeout(function(){
+      const l=document.getElementById('loading');
+      l.style.opacity='0';
+      setTimeout(function(){l.style.display='none';},500);
+    },2000);
+  });
+
+  // ── Particles ─────────────────────────────────────────────────────
+  const pc=document.getElementById('particles');
+  for(let i=0;i<28;i++){
+    const p=document.createElement('div'); p.className='particle';
+    p.style.cssText=`left:${Math.random()*100}%;--dur:${3+Math.random()*6}s;--delay:${Math.random()*7}s;--drift:${(Math.random()-0.5)*60}px`;
+    pc.appendChild(p);
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────
+  window.goTo=function(id){
+    SECTIONS.forEach(s=>{
+      const el=document.getElementById(s);
+      el.classList.remove('active');
+      el.querySelectorAll('.nav-dot').forEach((d,j)=>d.classList.toggle('active',SECTIONS[j]===id));
+    });
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+    if(id==='s-itin') startItinerary();
+    if(id==='s-game') resetDodge();
+    if(id==='s-tease') startTease();
+    if(id==='s-summary') buildSummary();
+  };
+
+  // ── Dodge game ────────────────────────────────────────────────────
+  let caught=false, attempts=0, progVal=0;
+  function resetDodge(){
+    caught=false;
+    const btn=document.getElementById('dodge-btn');
+    btn.classList.remove('caught');
+    btn.textContent='UNLOCK ITINERARY';
+    btn.style.top='50%'; btn.style.left='50%'; btn.style.transform='translate(-50%,-50%)';
+    document.getElementById('attempt-txt').textContent='';
+    progVal=0; document.getElementById('prog-fill').style.width='0%';
+  }
+  function moveBtn(){
+    if(caught) return;
+    const arena=document.getElementById('dodge-arena');
+    const btn=document.getElementById('dodge-btn');
+    btn.style.transform='none';
+    btn.style.left=(12+Math.random()*(arena.offsetWidth-btn.offsetWidth-24))+'px';
+    btn.style.top=(32+Math.random()*(arena.offsetHeight-btn.offsetHeight-40))+'px';
+    progVal=Math.min(progVal+8,90);
+    document.getElementById('prog-fill').style.width=progVal+'%';
+  }
+  document.getElementById('dodge-btn').addEventListener('mouseenter',function(){if(!caught)moveBtn();});
+  document.getElementById('dodge-btn').addEventListener('touchstart',function(e){if(!caught){e.preventDefault();moveBtn();}},{passive:false});
+  window.caughtIt=function(){
+    if(caught)return; caught=true; attempts++;
+    const btn=document.getElementById('dodge-btn');
+    btn.classList.add('caught'); btn.textContent='✓ IDENTITY CONFIRMED';
+    document.getElementById('prog-fill').style.width='100%';
+    const msgs=[
+      'JARVIS: "Biometric scan complete. You\'re in. Tony would approve of those reflexes."',
+      'JARVIS: "First attempt success. Either talented or suspiciously prepared."',
+      'JARVIS: "Finally. I was beginning to wonder if this mission would happen at all."',
+      'JARVIS: "Persistence acknowledged. Access granted. Please proceed."'
+    ];
+    document.getElementById('attempt-txt').textContent=msgs[Math.min(attempts-1,msgs.length-1)];
+    setTimeout(()=>goTo('s-itin'),1400);
+  };
+
+  // ── Itinerary animation ───────────────────────────────────────────
+  const xStops=[28,148,268,388,468,508];
+  function startItinerary(){
+    for(let i=1;i<=6;i++) document.getElementById('sb'+i).classList.remove('visible');
+    const car=document.getElementById('car-txt');
+    car.setAttribute('x',xStops[0]); let step=0;
+    function next(){
+      if(step>=6)return;
+      car.setAttribute('x',xStops[step]);
+      const b=document.getElementById('sb'+(step+1));
+      if(b) setTimeout(()=>b.classList.add('visible'),350);
+      step++; if(step<6) setTimeout(next,950);
+    }
+    setTimeout(next,400);
+  }
+
+  // ── Venue selection ───────────────────────────────────────────────
+  // single toggle
+  window.toggleVenue=function(cardId){
+    const card=document.getElementById(cardId);
+    card.classList.toggle('approved');
+    card.querySelector('.click-hint').textContent=card.classList.contains('approved')?'tap to clear':'tap to approve';
+  };
+  // radio-style
+  window.selectOne=function(cardId,group){
+    const prefix=cardId.slice(0,2); // e.g. v3
+    document.querySelectorAll('[id^="'+prefix+'"]').forEach(c=>{
+      c.classList.remove('approved');
+      c.querySelector('.click-hint').textContent='tap to approve';
+    });
+    const clicked=document.getElementById(cardId);
+    clicked.classList.add('approved');
+    clicked.querySelector('.click-hint').textContent='tap to clear';
+  };
+
+  // ── Tease page ────────────────────────────────────────────────────
+  const teaseLines=[
+    "Before you confirm...",
+    "Just know this was planned with actual effort.",
+    "Not a generic 'let\'s grab coffee' situation.",
+    "This is a full Iron Man-level production.",
+    "Because you deserve a properly good time.",
+    "And honestly? So does he. 😏",
+    "Now go confirm the mission.",
+  ];
+  function startTease(){
+    const container=document.getElementById('tease-lines');
+    container.innerHTML='';
+    let excVal=0;
+    const fill=document.getElementById('exc-fill');
+    const val=document.getElementById('exc-val');
+    // animate excitement bar
+    const barInterval=setInterval(()=>{
+      excVal=Math.min(excVal+1,100);
+      fill.style.width=excVal+'%';
+      val.textContent=excVal+'%';
+      if(excVal>=100){ clearInterval(barInterval); val.textContent='100% — CONFIRMED 🔥'; }
+    },30);
+    // reveal lines one by one
+    teaseLines.forEach((line,i)=>{
+      const d=document.createElement('div');
+      d.className='tease-line';
+      d.style.animationDelay=(i*0.6+0.3)+'s';
+      d.textContent=line;
+      container.appendChild(d);
+    });
+  }
+
+  // ── RSVP ──────────────────────────────────────────────────────────
+  window.rsvp=function(yes){
+    const msg=document.getElementById('rsvp-msg');
+    if(yes){
+      msg.style.color='var(--green)';
+      msg.textContent='JARVIS: "Mission accepted. Excellent choice. Generating final debrief now. See you out there, Agent."';
+      setTimeout(()=>goTo('s-summary'),2000);
+    } else {
+      msg.style.color='var(--red)';
+      msg.textContent='JARVIS: "Input error detected. The green button is the correct one. Please locate it and try again. I will wait here patiently."';
+      setTimeout(()=>{msg.textContent='';},3000);
+    }
+  };
+
+  // ── Summary ───────────────────────────────────────────────────────
+  const stopMeta=[
+    {time:'1:00 PM', label:'Keyes Art Mile',       cards:['v1a']},
+    {time:'3:00 PM', label:'Museum of Illusions',  cards:['v2a']},
+    {time:'5:00 PM', label:'Dinner',               cards:['v3a','v3b']},
+    {time:'7:30 PM', label:'Bowling',              cards:['v4a','v4b']},
+    {time:'8:30 PM', label:'Drinks & Games',       cards:['v5a']},
+    {time:'9:00 PM', label:'End of Mission',       cards:['v6a']},
+  ];
+  function buildSummary(){
+    const list=document.getElementById('summary-list');
+    list.innerHTML='';
+    stopMeta.forEach(stop=>{
+      const sel=stop.cards.filter(id=>{
+        const el=document.getElementById(id); return el&&el.classList.contains('approved');
+      });
+      const vName=sel.length
+        ? sel.map(id=>document.getElementById(id).querySelector('.venue-name').textContent).join(' & ')
+        : '— Not selected';
+      const approved=sel.length>0;
+      const row=document.createElement('div'); row.className='summary-row';
+      row.innerHTML=`
+        <span class="summary-time">${stop.time}</span>
+        <div class="summary-detail">
+          <div class="summary-stop">${stop.label}</div>
+          <div class="summary-venue">${vName}</div>
+        </div>
+        <span class="s-badge ${approved?'s-approved':'s-skipped'}">${approved?'APPROVED':'SKIPPED'}</span>`;
+      list.appendChild(row);
+    });
+  }
+
+  // ── Email report ──────────────────────────────────────────────────
+  window.sendReport=function(){
+    const btn=document.getElementById('send-btn');
+    const status=document.getElementById('send-status');
+    btn.disabled=true;
+    status.style.color='#48cae4';
+    status.textContent='JARVIS: "Encrypting and transmitting report to Command HQ..."';
+
+    const lines=[];
+    stopMeta.forEach(stop=>{
+      const sel=stop.cards.filter(id=>{
+        const el=document.getElementById(id); return el&&el.classList.contains('approved');
+      });
+      const venue=sel.length
+        ? sel.map(id=>document.getElementById(id).querySelector('.venue-name').textContent).join(' & ')
+        : 'Not selected';
+      lines.push(`${stop.time}  |  ${stop.label}  →  ${venue}`);
+    });
+
+    const timestamp=new Date().toLocaleString('en-ZA',{timeZone:'Africa/Johannesburg'});
+    const reportBody=`MISSION: FIRST DATE — ROSEBANK OPERATIONS\nTransmitted: ${timestamp}\n\n${'─'.repeat(50)}\n${lines.join('\n')}\n${'─'.repeat(50)}\n\nReport generated by JARVIS Mission Control.`;
+
+    emailjs.send(
+      'YOUR_SERVICE_ID',   // ← replace with your EmailJS service ID
+      'YOUR_TEMPLATE_ID',  // ← replace with your EmailJS template ID
+      {
+        to_email:  'amistri1999@gmail.com',
+        subject:   '🦾 Mission: First Date — Itinerary Report',
+        message:   reportBody,
+        timestamp: timestamp
+      }
+    ).then(()=>{
+      status.style.color='var(--green)';
+      status.textContent='JARVIS: "Transmission successful. Report delivered to amistri1999@gmail.com. Mission intelligence is in your hands, Command."';
+    }, err=>{
+      status.style.color='var(--red)';
+      status.textContent='JARVIS: "Transmission failed. Check EmailJS configuration. Error: '+JSON.stringify(err)+'."';
+      btn.disabled=false;
+    });
+  };
+
+})();
+</script>
+</body>
+</html>
